@@ -26,8 +26,9 @@ namespace Serilog.Sinks.Telegram
             {
                 chat_id = chatId,
                 text = message.Text,
-                parse_mode = "markdown"
+                parse_mode = message.ParseMode.ToString().ToLower()
             };
+
             var json = JsonConvert.SerializeObject(value: payload);
             var response = await _httpClient.PostAsync(requestUri: _apiUrl,
                 content: new StringContent(content: json, encoding: Encoding.UTF8, mediaType: "application/json"));

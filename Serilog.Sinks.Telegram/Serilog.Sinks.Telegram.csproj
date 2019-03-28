@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>2.1.0</Version>
+    <PackageId>Serilog.Sinks.TelegramLog</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
