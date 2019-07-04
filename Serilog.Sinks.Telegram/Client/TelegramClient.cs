@@ -22,14 +22,30 @@ namespace Serilog.Sinks.Telegram
 
         public async Task<HttpResponseMessage> PostAsync(TelegramMessage message, string chatId)
         {
-            var payload = new
-            {
-                chat_id = chatId,
-                text = message.Text,
-                parse_mode = message.ParseMode.ToString().ToLower()
-            };
+            string json;
 
-            var json = JsonConvert.SerializeObject(value: payload);
+            // If the message type is 'Plain', the 'parse_mode' key CANNOT be present at all,
+            // else the Telegram API will attempt to parse the message string as a MarkDown.
+            if (message.ParseMode == Client.TelegramParseModeTypes.Plain)
+            {
+                var payload = new
+                {
+                    chat_id = chatId,
+                    text = message.Text
+                };
+                json = JsonConvert.SerializeObject(value: payload);
+            }
+            else
+            {
+                var payload = new
+                {
+                    chat_id = chatId,
+                    text = message.Text,
+                    parse_mode = message.ParseMode.ToString().ToLower()
+                };
+                json = JsonConvert.SerializeObject(value: payload);
+            }
+
             var response = await _httpClient.PostAsync(requestUri: _apiUrl,
                 content: new StringContent(content: json, encoding: Encoding.UTF8, mediaType: "application/json"));
 
