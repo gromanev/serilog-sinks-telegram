@@ -17,14 +17,17 @@ namespace Serilog.Sinks.Telegram
         private readonly string _chatId;
         private readonly string _token;
         protected readonly IFormatProvider FormatProvider;
+        protected readonly ITelegramClientFactory TelegramClientFactory;
 
         /// <summary>
         /// RenderMessage method that will transform LogEvent into a Telegram message.
         /// </summary>
         protected RenderMessageMethod RenderMessageImplementation = RenderMessage;
 
-        public TelegramSink(string chatId, string token, RenderMessageMethod renderMessageImplementation,
-            IFormatProvider formatProvider)
+        public TelegramSink(string chatId, string token, 
+            RenderMessageMethod renderMessageImplementation,
+            IFormatProvider formatProvider,
+            ITelegramClientFactory telegramClientFactory)
         {
             if (string.IsNullOrWhiteSpace(value: chatId))
                 throw new ArgumentNullException(paramName: nameof(chatId));
@@ -37,6 +40,8 @@ namespace Serilog.Sinks.Telegram
                 RenderMessageImplementation = renderMessageImplementation;
             _chatId = chatId;
             _token = token;
+
+            TelegramClientFactory = telegramClientFactory ?? new TelegramClientFactory();
         }
 
         #region ILogEventSink implementation
@@ -46,7 +51,17 @@ namespace Serilog.Sinks.Telegram
             var message = FormatProvider != null
                 ? new TelegramMessage(text: logEvent.RenderMessage(formatProvider: FormatProvider))
                 : RenderMessageImplementation(input: logEvent);
-            SendMessage(token: _token, chatId: _chatId, message: message);
+
+            // The message renderer may decide to discard the message. If so, we skip sending
+            // the current event and let things proceed. This is particularly useful for implementing
+            // an 'intelligent' renderer and analyses the message and makes a decision to send
+            // it to Telegram or not. Criteria such as message content could be used to make a
+            // decision, or further messages to Telegram could be skipped if a threshold of 
+            // "too many messages too fast" is passed, for example.
+            if (message != null)
+            {
+                SendMessage(token: _token, chatId: _chatId, message: message);
+            }
         }
 
         #endregion
@@ -91,9 +106,9 @@ namespace Serilog.Sinks.Telegram
         {
             SelfLog.WriteLine($"Trying to send message to chatId '{chatId}': '{message}'.");
 
-            var client = new TelegramClient(botToken: token, timeoutSeconds: 5);
+            ITelegramClient telegramClient = TelegramClientFactory.CreateClient(token);
 
-            var sendMessageTask = client.PostAsync(message: message, chatId: chatId);
+            var sendMessageTask = telegramClient.PostAsync(message: message, chatId: chatId);
             Task.WaitAll(sendMessageTask);
 
             var sendMessageResult = sendMessageTask.Result;

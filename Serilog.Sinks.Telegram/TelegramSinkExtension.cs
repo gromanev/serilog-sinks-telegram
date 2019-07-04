@@ -12,7 +12,8 @@ namespace Serilog.Sinks.Telegram
             string chatId,
             TelegramSink.RenderMessageMethod renderMessageImplementation = null,
             LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
-            IFormatProvider formatProvider = null
+            IFormatProvider formatProvider = null,
+            ITelegramClientFactory telegramClientFactory = null
         )
         {
             if (loggerConfiguration == null)
@@ -23,7 +24,8 @@ namespace Serilog.Sinks.Telegram
                     chatId: chatId,
                     token: token,
                     renderMessageImplementation: renderMessageImplementation,
-                    formatProvider: formatProvider
+                    formatProvider: formatProvider,
+                    telegramClientFactory: telegramClientFactory
                 ),
                 restrictedToMinimumLevel: restrictedToMinimumLevel);
         }
