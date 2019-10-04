@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using Serilog.Configuration;
 using Serilog.Events;
 
@@ -13,21 +14,23 @@ namespace Serilog.Sinks.Telegram
             TelegramSink.RenderMessageMethod renderMessageImplementation = null,
             LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
             IFormatProvider formatProvider = null,
-            ITelegramClientFactory telegramClientFactory = null
+            ITelegramClientFactory telegramClientFactory = null,
+            IWebProxy proxy = null
         )
         {
             if (loggerConfiguration == null)
-                throw new ArgumentNullException(paramName: nameof(loggerConfiguration));
+                throw new ArgumentNullException(nameof(loggerConfiguration));
 
             return loggerConfiguration.Sink(
-                logEventSink: new TelegramSink(
-                    chatId: chatId,
-                    token: token,
-                    renderMessageImplementation: renderMessageImplementation,
-                    formatProvider: formatProvider,
-                    telegramClientFactory: telegramClientFactory
+                new TelegramSink(
+                    chatId,
+                    token,
+                    renderMessageImplementation,
+                    formatProvider,
+                    telegramClientFactory,
+                    proxy
                 ),
-                restrictedToMinimumLevel: restrictedToMinimumLevel);
+                restrictedToMinimumLevel);
         }
     }
 }
